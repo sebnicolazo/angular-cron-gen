@@ -1,35 +1,4 @@
-const ACCEPTABLE_CRON_FORMATS = ['quartz'];
-const DAY_LOOKUPS = {
-    'SUN': 'Sunday',
-    'MON': 'Monday',
-    'TUE': 'Tuesday',
-    'WED': 'Wednesday',
-    'THU': 'Thursday',
-    'FRI': 'Friday',
-    'SAT': 'Saturday'
-};
-const MONTH_WEEK_LOOKUPS = {
-    '#1': 'First',
-    '#2': 'Second',
-    '#3': 'Third',
-    '#4': 'Fourth',
-    '#5': 'Fifth',
-    'L': 'Last'
-};
-const MONTH_LOOKUPS = {
-    '1': 'January',
-    '2': 'February',
-    '3': 'March',
-    '4': 'April',
-    '5': 'May',
-    '6': 'June',
-    '7': 'July',
-    '8': 'August',
-    '9': 'September',
-    '10': 'October',
-    '11': 'November',
-    '12': 'December'
-};
+const ACCEPTABLE_CRON_FORMATS = ['quartz', 'unix'];
 
 const States = {
     INIT: 1,
@@ -38,13 +7,17 @@ const States = {
 };
 
 export class CronGenComponent {
-    constructor($scope, cronGenService) {
+    constructor($scope, $translate, $filter, cronGenService) {
         'ngInject';
 
         this.parsedOptions = this.mergeDefaultOptions(this.options);
 
+        $translate.use(this.parsedOptions.language);
+
         angular.extend(this, {
             cronGenService,
+            filter: $filter,
+            translate: $translate,
             cronFormat: 'quartz',
             currentState: States.INIT,
             activeTab: (() => {
@@ -146,7 +119,7 @@ export class CronGenComponent {
                     }
                 },
                 advanced: {
-                    expression: '0 15 10 L-2 * ?'
+                    expression: this.cronFormat === 'quartz' ? '0 15 10 L-2 * ?' : '0 6 1 * *'
                 }
             }
         });
@@ -160,7 +133,7 @@ export class CronGenComponent {
         $scope.$watch('$ctrl.ngModel', (cron) => this.handleModelChange(cron));
 
         // Watch for option changes
-        $scope.$watch('$ctrl.options', (options) => this.parsedOptions = this.mergeDefaultOptions(options), true);
+        $scope.$watch('$ctrl.options', this.optionsChanged.bind(this), true);
     }
 
     $onInit() {
@@ -168,6 +141,11 @@ export class CronGenComponent {
         if (this.formCtrl && this.name) {
             this.ngModelCtrl.$validators.testCronExpr = expression => this.cronGenService.isValid(this.cronFormat, expression);
         }
+    }
+
+    optionsChanged(options) {
+        this.parsedOptions = this.mergeDefaultOptions(options);
+        this.translate.use(this.parsedOptions.language);
     }
 
     setActiveTab($event, tab) {
@@ -179,26 +157,79 @@ export class CronGenComponent {
     }
 
     dayDisplay(day) {
-        return DAY_LOOKUPS[day];
+        switch (day) {
+            case "SUN":
+                return this.filter('translate')('SUNDAY');
+            case "MON":
+                return this.filter('translate')('MONDAY');
+            case "TUE":
+                return this.filter('translate')('TUESDAY');
+            case "WED":
+                return this.filter('translate')('WEDNESDAY');
+            case "THU":
+                return this.filter('translate')('THURSDAY');
+            case "FRI":
+                return this.filter('translate')('FRIDAY');
+            case "SAT":
+                return this.filter('translate')('SATURDAY');
+        }
     }
 
     monthWeekDisplay(monthWeekNumber) {
-        return MONTH_WEEK_LOOKUPS[monthWeekNumber];
+        switch (monthWeekNumber) {
+            case "#1":
+                return this.filter('translate')('FIRST');
+            case "#2":
+                return this.filter('translate')('SECOND');
+            case "#3":
+                return this.filter('translate')('THIRD');
+            case "#4":
+                return this.filter('translate')('FOURTH');
+            case "#5":
+                return this.filter('translate')('FIFTH');
+            case "L":
+                return this.filter('translate')('LAST');
+        }
     }
 
     monthDisplay(monthNumber) {
-        return MONTH_LOOKUPS[monthNumber];
+        switch (monthNumber) {
+            case 1:
+                return this.filter('translate')('JANUARY');
+            case 2:
+                return this.filter('translate')('FEBRUARY');
+            case 3:
+                return this.filter('translate')('MARCH');
+            case 4:
+                return this.filter('translate')('APRIL');
+            case 5:
+                return this.filter('translate')('MAY');
+            case 6:
+                return this.filter('translate')('JUNE');
+            case 7:
+                return this.filter('translate')('JULY');
+            case 8:
+                return this.filter('translate')('AUGUST');
+            case 9:
+                return this.filter('translate')('SEPTEMBER');
+            case 10:
+                return this.filter('translate')('OCTOBER');
+            case 11:
+                return this.filter('translate')('NOVEMBER');
+            case 12:
+                return this.filter('translate')('DECEMBER');
+        }
     }
 
     monthDayDisplay(monthDay) {
         if (monthDay === 'L') {
-            return 'Last Day';
+            return this.filter('translate')('LAST_DAY');
         } else if (monthDay === 'LW') {
-            return 'Last Weekday';
+            return this.filter('translate')('LAST_WEEKDAY');
         } else if (monthDay === '1W') {
-            return 'First Weekday';
+            return this.filter('translate')('FIRST_WEEKDAY');
         } else {
-            return `${monthDay}${this.cronGenService.appendInt(monthDay)} Day`;
+            return `${monthDay}${this.cronGenService.appendInt(monthDay)} ${this.filter('translate')('DAY')}`;
         }
     }
 
@@ -228,74 +259,120 @@ export class CronGenComponent {
             formSelectClass: 'form-control cron-gen-select',
             formRadioClass: 'cron-gen-radio',
             formCheckboxClass: 'cron-gen-checkbox',
-            hideMinutesTab: false,
-            hideHourlyTab: false,
+            hideMinutesTab: true,
+            hideHourlyTab: true,
             hideDailyTab: false,
             hideWeeklyTab: false,
             hideMonthlyTab: false,
             hideYearlyTab: false,
             hideAdvancedTab: true,
-            use24HourTime: false,
-            hideSeconds: false
+            use24HourTime: true,
+            hideSeconds: true,
+            language: 'en'
         }, options);
     }
 
     regenerateCron() {
         this.currentState = States.DIRTY;
-        switch (this.activeTab) {
-            case 'minutes':
-                this.ngModel = `${this.state.minutes.seconds} 0/${this.state.minutes.minutes} * 1/1 * ? *`;
-                break;
-            case 'hourly':
-                this.ngModel = `${this.state.hourly.seconds} ${this.state.hourly.minutes} 0/${this.state.hourly.hours} 1/1 * ? *`;
-                break;
-            case 'daily':
-                switch (this.state.daily.subTab) {
-                    case 'everyDays':
-                        this.ngModel = `${this.state.daily.everyDays.seconds} ${this.state.daily.everyDays.minutes} ${this.hourToCron(this.state.daily.everyDays.hours, this.state.daily.everyDays.hourType)} 1/${this.state.daily.everyDays.days} * ? *`;
+        switch(this.cronFormat) {
+            case 'quartz':
+                switch (this.activeTab) {
+                    case 'minutes':
+                        this.ngModel = `${this.state.minutes.seconds} 0/${this.state.minutes.minutes} * 1/1 * ? *`;
                         break;
-                    case 'everyWeekDay':
-                        this.ngModel = `${this.state.daily.everyWeekDay.seconds} ${this.state.daily.everyWeekDay.minutes} ${this.hourToCron(this.state.daily.everyWeekDay.hours, this.state.daily.everyWeekDay.hourType)} ? * MON-FRI *`;
+                    case 'hourly':
+                        this.ngModel = `${this.state.hourly.seconds} ${this.state.hourly.minutes} 0/${this.state.hourly.hours} 1/1 * ? *`;
+                        break;
+                    case 'daily':
+                        switch (this.state.daily.subTab) {
+                            case 'everyDays':
+                                this.ngModel = `${this.state.daily.everyDays.seconds} ${this.state.daily.everyDays.minutes} ${this.hourToCron(this.state.daily.everyDays.hours, this.state.daily.everyDays.hourType)} 1/${this.state.daily.everyDays.days} * ? *`;
+                                break;
+                            case 'everyWeekDay':
+                                this.ngModel = `${this.state.daily.everyWeekDay.seconds} ${this.state.daily.everyWeekDay.minutes} ${this.hourToCron(this.state.daily.everyWeekDay.hours, this.state.daily.everyWeekDay.hourType)} ? * MON-FRI *`;
+                                break;
+                            default:
+                                throw 'Invalid cron daily subtab selection';
+                        }
+                        break;
+                    case 'weekly':
+                        const days = this.selectOptions.days
+                            .reduce((acc, day) => this.state.weekly[day] ? acc.concat([day]) : acc, [])
+                            .join(',');
+                        this.ngModel = `${this.state.weekly.seconds} ${this.state.weekly.minutes} ${this.hourToCron(this.state.weekly.hours, this.state.weekly.hourType)} ? * ${days} *`;
+                        break;
+                    case 'monthly':
+                        switch (this.state.monthly.subTab) {
+                            case 'specificDay':
+                                this.ngModel = `${this.state.monthly.specificDay.seconds} ${this.state.monthly.specificDay.minutes} ${this.hourToCron(this.state.monthly.specificDay.hours, this.state.monthly.specificDay.hourType)} ${this.state.monthly.specificDay.day} 1/${this.state.monthly.specificDay.months} ? *`;
+                                break;
+                            case 'specificWeekDay':
+                                this.ngModel = `${this.state.monthly.specificWeekDay.seconds} ${this.state.monthly.specificWeekDay.minutes} ${this.hourToCron(this.state.monthly.specificWeekDay.hours, this.state.monthly.specificWeekDay.hourType)} ? 1/${this.state.monthly.specificWeekDay.months} ${this.state.monthly.specificWeekDay.day}${this.state.monthly.specificWeekDay.monthWeek} *`;
+                                break;
+                            default:
+                                throw 'Invalid cron monthly subtab selection';
+                        }
+                        break;
+                    case 'yearly':
+                        switch (this.state.yearly.subTab) {
+                            case 'specificMonthDay':
+                                this.ngModel = `${this.state.yearly.specificMonthDay.seconds} ${this.state.yearly.specificMonthDay.minutes} ${this.hourToCron(this.state.yearly.specificMonthDay.hours, this.state.yearly.specificMonthDay.hourType)} ${this.state.yearly.specificMonthDay.day} ${this.state.yearly.specificMonthDay.month} ? *`;
+                                break;
+                            case 'specificMonthWeek':
+                                this.ngModel = `${this.state.yearly.specificMonthWeek.seconds} ${this.state.yearly.specificMonthWeek.minutes} ${this.hourToCron(this.state.yearly.specificMonthWeek.hours, this.state.yearly.specificMonthWeek.hourType)} ? ${this.state.yearly.specificMonthWeek.month} ${this.state.yearly.specificMonthWeek.day}${this.state.yearly.specificMonthWeek.monthWeek} *`;
+                                break;
+                            default:
+                                throw 'Invalid cron yearly subtab selection';
+                        }
+                        break;
+                    case 'advanced':
+                        this.ngModel = this.state.advanced.expression;
                         break;
                     default:
-                        throw 'Invalid cron daily subtab selection';
+                        throw 'Invalid cron active tab selection';
                 }
-                break;
-            case 'weekly':
-                const days = this.selectOptions.days
-                    .reduce((acc, day) => this.state.weekly[day] ? acc.concat([day]) : acc, [])
-                    .join(',');
-                this.ngModel = `${this.state.weekly.seconds} ${this.state.weekly.minutes} ${this.hourToCron(this.state.weekly.hours, this.state.weekly.hourType)} ? * ${days} *`;
-                break;
-            case 'monthly':
-                switch (this.state.monthly.subTab) {
-                    case 'specificDay':
-                        this.ngModel = `${this.state.monthly.specificDay.seconds} ${this.state.monthly.specificDay.minutes} ${this.hourToCron(this.state.monthly.specificDay.hours, this.state.monthly.specificDay.hourType)} ${this.state.monthly.specificDay.day} 1/${this.state.monthly.specificDay.months} ? *`;
-                        break;
-                    case 'specificWeekDay':
-                        this.ngModel = `${this.state.monthly.specificWeekDay.seconds} ${this.state.monthly.specificWeekDay.minutes} ${this.hourToCron(this.state.monthly.specificWeekDay.hours, this.state.monthly.specificWeekDay.hourType)} ? 1/${this.state.monthly.specificWeekDay.months} ${this.state.monthly.specificWeekDay.day}${this.state.monthly.specificWeekDay.monthWeek} *`;
-                        break;
-                    default:
-                        throw 'Invalid cron monthly subtab selection';
-                }
-                break;
-            case 'yearly':
-                switch (this.state.yearly.subTab) {
-                    case 'specificMonthDay':
-                        this.ngModel = `${this.state.yearly.specificMonthDay.seconds} ${this.state.yearly.specificMonthDay.minutes} ${this.hourToCron(this.state.yearly.specificMonthDay.hours, this.state.yearly.specificMonthDay.hourType)} ${this.state.yearly.specificMonthDay.day} ${this.state.yearly.specificMonthDay.month} ? *`;
-                        break;
-                    case 'specificMonthWeek':
-                        this.ngModel = `${this.state.yearly.specificMonthWeek.seconds} ${this.state.yearly.specificMonthWeek.minutes} ${this.hourToCron(this.state.yearly.specificMonthWeek.hours, this.state.yearly.specificMonthWeek.hourType)} ? ${this.state.yearly.specificMonthWeek.month} ${this.state.yearly.specificMonthWeek.day}${this.state.yearly.specificMonthWeek.monthWeek} *`;
-                        break;
-                    default:
-                        throw 'Invalid cron yearly subtab selection';
-                }
-                break;
-            case 'advanced':
-                this.ngModel = this.state.advanced.expression;
-                break;
-            default:
-                throw 'Invalid cron active tab selection';
+            case 'unix':
+                case 'daily':
+                    switch (this.state.daily.subTab) {
+                        case 'everyDays':
+                            this.ngModel = `${this.state.daily.everyDays.minutes} ${this.hourToCron(this.state.daily.everyDays.hours, this.state.daily.everyDays.hourType)} */${this.state.daily.everyDays.days} * *`;
+                            break;
+                        case 'everyWeekDay':
+                            this.ngModel = `${this.state.daily.everyWeekDay.minutes} ${this.hourToCron(this.state.daily.everyWeekDay.hours, this.state.daily.everyWeekDay.hourType)} * * 1-5`;
+                            break;
+                        default:
+                            throw 'Invalid cron daily subtab selection';
+                    }
+                    break;
+                case 'weekly':
+                    const days = this.selectOptions.days
+                        .reduce((acc, day) => this.state.weekly[day] ? acc.concat([day]) : acc, [])
+                        .join(',');
+                    this.ngModel = `${this.state.weekly.minutes} ${this.hourToCron(this.state.weekly.hours, this.state.weekly.hourType)} ? * ${days}`;
+                    break;
+                case 'monthly':
+                    switch (this.state.monthly.subTab) {
+                        case 'specificDay':
+                            this.ngModel = `${this.state.monthly.specificDay.minutes} ${this.hourToCron(this.state.monthly.specificDay.hours, this.state.monthly.specificDay.hourType)} ${this.state.monthly.specificDay.day} */${this.state.monthly.specificDay.months} *`;
+                            break;
+                        default:
+                            throw 'Invalid cron monthly subtab selection';
+                    }
+                    break;
+                case 'yearly':
+                    switch (this.state.yearly.subTab) {
+                        case 'specificMonthDay':
+                            this.ngModel = `${this.state.yearly.specificMonthDay.minutes} ${this.hourToCron(this.state.yearly.specificMonthDay.hours, this.state.yearly.specificMonthDay.hourType)} ${this.state.yearly.specificMonthDay.day} ${this.state.yearly.specificMonthDay.month} *`;
+                            break;
+                        default:
+                            throw 'Invalid cron yearly subtab selection';
+                    }
+                    break;
+                case 'advanced':
+                    this.ngModel = this.state.advanced.expression;
+                    break;
+                default:
+                    throw 'Invalid cron active tab selection';
         }
     }
 
@@ -312,7 +389,7 @@ export class CronGenComponent {
         }
 
         const segments = cron.split(' ');
-        if (segments.length === 6 || segments.length === 7) {
+        if (this.cronFormat === 'quartz' && (segments.length === 6 || segments.length === 7)) {
             const [seconds, minutes, hours, dayOfMonth, month, dayOfWeek] = segments;
             if (cron.match(/\d+ 0\/\d+ \* 1\/1 \* \? \*/)) {
                 this.activeTab = 'minutes';
@@ -395,6 +472,58 @@ export class CronGenComponent {
                 this.state.yearly.specificMonthWeek.hourType = this.getHourType(parsedHours);
                 this.state.yearly.specificMonthWeek.minutes = parseInt(minutes);
                 this.state.yearly.specificMonthWeek.seconds = parseInt(seconds);
+            } else {
+                this.activeTab = 'advanced';
+                this.state.advanced.expression = cron;
+            }
+        } else if (this.cronFormat === 'unix' && (segments.length === 5)) {
+            const [minutes, hours, dayOfMonth, month, dayOfWeek] = segments;
+            if (cron.match(/\d+ \d+ 1\/\d+ \* \*/)) {
+                this.activeTab = 'daily';
+                this.state.daily.subTab = 'everyDays';
+                this.state.daily.everyDays.days = parseInt(dayOfMonth.substring(2));
+                const parsedHours = parseInt(hours);
+                this.state.daily.everyDays.hours = this.processHour(parsedHours);
+                this.state.daily.everyDays.hourType = this.getHourType(parsedHours);
+                this.state.daily.everyDays.minutes = parseInt(minutes);
+                this.state.daily.everyDays.seconds = 0;
+            } else if (cron.match(/\d+ \d+ \* \* MON-FRI/)) {
+                this.activeTab = 'daily';
+                this.state.daily.subTab = 'everyWeekDay';
+                const parsedHours = parseInt(hours);
+                this.state.daily.everyWeekDay.hours = this.processHour(parsedHours);
+                this.state.daily.everyWeekDay.hourType = this.getHourType(parsedHours);
+                this.state.daily.everyWeekDay.minutes = parseInt(minutes);
+                this.state.daily.everyWeekDay.seconds = 0;
+            } else if (cron.match(/\d+ \d+ \* \* (MON|TUE|WED|THU|FRI|SAT|SUN)(,(MON|TUE|WED|THU|FRI|SAT|SUN))*/)) {
+                this.activeTab = 'weekly';
+                this.selectOptions.days.forEach(weekDay => this.state.weekly[weekDay] = false);
+                dayOfWeek.split(',').forEach(weekDay => this.state.weekly[weekDay] = true);
+                const parsedHours = parseInt(hours);
+                this.state.weekly.hours = this.processHour(parsedHours);
+                this.state.weekly.hourType = this.getHourType(parsedHours);
+                this.state.weekly.minutes = parseInt(minutes);
+                this.state.weekly.seconds = 0;
+            } else if (cron.match(/\d+ \d+ \d+ 1\/\d+ \*/)) {
+                this.activeTab = 'monthly';
+                this.state.monthly.subTab = 'specificDay';
+                this.state.monthly.specificDay.day = dayOfMonth;
+                this.state.monthly.specificDay.months = parseInt(month.substring(2));
+                const parsedHours = parseInt(hours);
+                this.state.monthly.specificDay.hours = this.processHour(parsedHours);
+                this.state.monthly.specificDay.hourType = this.getHourType(parsedHours);
+                this.state.monthly.specificDay.minutes = parseInt(minutes);
+                this.state.monthly.specificDay.seconds = 0;
+            } else if (cron.match(/\d+ \d+ \d+ \d+ \*/)) {
+                this.activeTab = 'yearly';
+                this.state.yearly.subTab = 'specificMonthDay';
+                this.state.yearly.specificMonthDay.month = parseInt(month);
+                this.state.yearly.specificMonthDay.day = dayOfMonth;
+                const parsedHours = parseInt(hours);
+                this.state.yearly.specificMonthDay.hours = this.processHour(parsedHours);
+                this.state.yearly.specificMonthDay.hourType = this.getHourType(parsedHours);
+                this.state.yearly.specificMonthDay.minutes = parseInt(minutes);
+                this.state.yearly.specificMonthDay.seconds = 0;
             } else {
                 this.activeTab = 'advanced';
                 this.state.advanced.expression = cron;

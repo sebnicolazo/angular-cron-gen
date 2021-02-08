@@ -45,5 +45,8 @@
     "gulp-uglifycss": "^1.0.6",
     "minimist": "^1.2.5",
     "rollup-plugin-babel": "^4.4.0"
+  },
+  "dependencies": {
+    "angular-translate": "^2.18.1"
   }
 }
