@@ -48,6 +48,29 @@ const srcTask = () =>
   .pipe(sourcemaps.write('.'))
   .pipe(gulp.dest('build'));
 
-const build = gulp.series(cleanTask, srcTask, lessTask);
+const srcTaskNotMinified = () =>
+  gulp.src('src/**/*.js')
+  .pipe(sourcemaps.init())
+  .pipe(rollup({
+    output: {
+      format: 'iife'
+    },
+    plugins: [
+      rollupBabel()
+    ],
+    input: 'src/cron-gen.module.js'
+  }))
+  .pipe(ngAnnotate())
+  .pipe(addStream.obj(() => gulp.src('src/templates/*.html')
+    .pipe(templateCache({
+      root: 'angular-cron-gen',
+      module: 'angular-cron-gen'
+    }))))
+  .pipe(gulp.dest('build'))
+  .pipe(concat('cron-gen.js'))
+  .pipe(sourcemaps.write('.'))
+  .pipe(gulp.dest('build'));
+
+const build = gulp.series(cleanTask, srcTask, lessTask, srcTaskNotMinified);
 
 export default build;
