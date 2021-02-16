@@ -18,7 +18,7 @@ export class CronGenComponent {
             cronGenService,
             filter: $filter,
             translate: $translate,
-            cronFormat: 'quartz',
+            cronFormat: 'unix',
             currentState: States.INIT,
             activeTab: (() => {
                 if (!this.parsedOptions.hideMinutesTab) {
@@ -478,7 +478,7 @@ export class CronGenComponent {
             }
         } else if (this.cronFormat === 'unix' && (segments.length === 5)) {
             const [minutes, hours, dayOfMonth, month, dayOfWeek] = segments;
-            if (cron.match(/\d+ \d+ 1\/\d+ \* \*/)) {
+            if (cron.match(/\d+ \d+ *\/\d+ \* \*/)) {
                 this.activeTab = 'daily';
                 this.state.daily.subTab = 'everyDays';
                 this.state.daily.everyDays.days = parseInt(dayOfMonth.substring(2));

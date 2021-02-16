@@ -116,7 +116,7 @@
         cronGenService: cronGenService,
         filter: $filter,
         translate: $translate,
-        cronFormat: 'quartz',
+        cronFormat: 'unix',
         currentState: States.INIT,
         activeTab: function () {
           if (!_this.parsedOptions.hideMinutesTab) {
@@ -685,7 +685,7 @@
               _month = _segments2[3],
               _dayOfWeek = _segments2[4];
 
-          if (cron.match(/\d+ \d+ 1\/\d+ \* \*/)) {
+          if (cron.match(/\d+ \d+ *\/\d+ \* \*/)) {
             this.activeTab = 'daily';
             this.state.daily.subTab = 'everyDays';
             this.state.daily.everyDays.days = parseInt(_dayOfMonth.substring(2));
