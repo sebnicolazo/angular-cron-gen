@@ -332,47 +332,49 @@ export class CronGenComponent {
                         throw 'Invalid cron active tab selection';
                 }
             case 'unix':
-                case 'daily':
-                    switch (this.state.daily.subTab) {
-                        case 'everyDays':
-                            this.ngModel = `${this.state.daily.everyDays.minutes} ${this.hourToCron(this.state.daily.everyDays.hours, this.state.daily.everyDays.hourType)} */${this.state.daily.everyDays.days} * *`;
-                            break;
-                        case 'everyWeekDay':
-                            this.ngModel = `${this.state.daily.everyWeekDay.minutes} ${this.hourToCron(this.state.daily.everyWeekDay.hours, this.state.daily.everyWeekDay.hourType)} * * 1-5`;
-                            break;
-                        default:
-                            throw 'Invalid cron daily subtab selection';
-                    }
-                    break;
-                case 'weekly':
-                    const days = this.selectOptions.days
-                        .reduce((acc, day) => this.state.weekly[day] ? acc.concat([day]) : acc, [])
-                        .join(',');
-                    this.ngModel = `${this.state.weekly.minutes} ${this.hourToCron(this.state.weekly.hours, this.state.weekly.hourType)} ? * ${days}`;
-                    break;
-                case 'monthly':
-                    switch (this.state.monthly.subTab) {
-                        case 'specificDay':
-                            this.ngModel = `${this.state.monthly.specificDay.minutes} ${this.hourToCron(this.state.monthly.specificDay.hours, this.state.monthly.specificDay.hourType)} ${this.state.monthly.specificDay.day} */${this.state.monthly.specificDay.months} *`;
-                            break;
-                        default:
-                            throw 'Invalid cron monthly subtab selection';
-                    }
-                    break;
-                case 'yearly':
-                    switch (this.state.yearly.subTab) {
-                        case 'specificMonthDay':
-                            this.ngModel = `${this.state.yearly.specificMonthDay.minutes} ${this.hourToCron(this.state.yearly.specificMonthDay.hours, this.state.yearly.specificMonthDay.hourType)} ${this.state.yearly.specificMonthDay.day} ${this.state.yearly.specificMonthDay.month} *`;
-                            break;
-                        default:
-                            throw 'Invalid cron yearly subtab selection';
-                    }
-                    break;
-                case 'advanced':
-                    this.ngModel = this.state.advanced.expression;
-                    break;
-                default:
-                    throw 'Invalid cron active tab selection';
+                switch (this.activeTab) {
+                    case 'daily':
+                        switch (this.state.daily.subTab) {
+                            case 'everyDays':
+                                this.ngModel = `${this.state.daily.everyDays.minutes} ${this.hourToCron(this.state.daily.everyDays.hours, this.state.daily.everyDays.hourType)} */${this.state.daily.everyDays.days} * *`;
+                                break;
+                            case 'everyWeekDay':
+                                this.ngModel = `${this.state.daily.everyWeekDay.minutes} ${this.hourToCron(this.state.daily.everyWeekDay.hours, this.state.daily.everyWeekDay.hourType)} * * 1-5`;
+                                break;
+                            default:
+                                throw 'Invalid cron daily subtab selection';
+                        }
+                        break;
+                    case 'weekly':
+                        const days = this.selectOptions.days
+                            .reduce((acc, day) => this.state.weekly[day] ? acc.concat([day]) : acc, [])
+                            .join(',');
+                        this.ngModel = `${this.state.weekly.minutes} ${this.hourToCron(this.state.weekly.hours, this.state.weekly.hourType)} ? * ${days}`;
+                        break;
+                    case 'monthly':
+                        switch (this.state.monthly.subTab) {
+                            case 'specificDay':
+                                this.ngModel = `${this.state.monthly.specificDay.minutes} ${this.hourToCron(this.state.monthly.specificDay.hours, this.state.monthly.specificDay.hourType)} ${this.state.monthly.specificDay.day} */${this.state.monthly.specificDay.months} *`;
+                                break;
+                            default:
+                                throw 'Invalid cron monthly subtab selection';
+                        }
+                        break;
+                    case 'yearly':
+                        switch (this.state.yearly.subTab) {
+                            case 'specificMonthDay':
+                                this.ngModel = `${this.state.yearly.specificMonthDay.minutes} ${this.hourToCron(this.state.yearly.specificMonthDay.hours, this.state.yearly.specificMonthDay.hourType)} ${this.state.yearly.specificMonthDay.day} ${this.state.yearly.specificMonthDay.month} *`;
+                                break;
+                            default:
+                                throw 'Invalid cron yearly subtab selection';
+                        }
+                        break;
+                    case 'advanced':
+                        this.ngModel = this.state.advanced.expression;
+                        break;
+                    default:
+                        throw 'Invalid cron active tab selection';
+                }
         }
     }
 
@@ -478,7 +480,7 @@ export class CronGenComponent {
             }
         } else if (this.cronFormat === 'unix' && (segments.length === 5)) {
             const [minutes, hours, dayOfMonth, month, dayOfWeek] = segments;
-            if (cron.match(/\d+ \d+ *\/\d+ \* \*/)) {
+            if (cron.match(/\d+ \d+ \*\/\d+ \* \*/)) {
                 this.activeTab = 'daily';
                 this.state.daily.subTab = 'everyDays';
                 this.state.daily.everyDays.days = parseInt(dayOfMonth.substring(2));
