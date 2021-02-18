@@ -349,7 +349,7 @@ export class CronGenComponent {
                         const days = this.selectOptions.days
                             .reduce((acc, day) => this.state.weekly[day] ? acc.concat([day]) : acc, [])
                             .join(',');
-                        this.ngModel = `${this.state.weekly.minutes} ${this.hourToCron(this.state.weekly.hours, this.state.weekly.hourType)} ? * ${days}`;
+                        this.ngModel = `${this.state.weekly.minutes} ${this.hourToCron(this.state.weekly.hours, this.state.weekly.hourType)} * * ${days}`;
                         break;
                     case 'monthly':
                         switch (this.state.monthly.subTab) {

@@ -513,7 +513,7 @@
                   return _this3.state.weekly[day] ? acc.concat([day]) : acc;
                 }, []).join(',');
 
-                this.ngModel = "".concat(this.state.weekly.minutes, " ").concat(this.hourToCron(this.state.weekly.hours, this.state.weekly.hourType), " ? * ").concat(_days);
+                this.ngModel = "".concat(this.state.weekly.minutes, " ").concat(this.hourToCron(this.state.weekly.hours, this.state.weekly.hourType), " * * ").concat(_days);
                 break;
 
               case 'monthly':
